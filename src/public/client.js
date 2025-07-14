@@ -1,5 +1,5 @@
 let store = Immutable.Map({
-    user: Immutable.Map({ name: "Student" }),
+    user: Immutable.Map({ name: "NASA Fans" }),
     apod: '',
     rovers: ['Curiosity', 'Opportunity', 'Spirit'],
 })
