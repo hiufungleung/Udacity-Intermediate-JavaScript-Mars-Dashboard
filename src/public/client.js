@@ -1,14 +1,14 @@
-let store = {
-    user: { name: "NASA Fans" },
+let store = Immutable.Map({
+    user: Immutable.Map({ name: "Student" }),
     apod: '',
     rovers: ['Curiosity', 'Opportunity', 'Spirit'],
-}
+})
 
 // add our markup to the page
 const root = document.getElementById('root')
 
 const updateStore = (store, newState) => {
-    store = Object.assign(store, newState)
+    store = store.merge(newState)
     render(root, store)
 }
 
@@ -19,14 +19,17 @@ const render = async (root, state) => {
 
 // create content
 const App = (state) => {
-    let { rovers, apod, selectedRoverData } = state;
+    const rovers = state.get('rovers');
+    const apod = state.get('apod');
+    const name = state.getIn(['user', 'name']);
+    const selectedRoverData = state.get('selectedRoverData');
     const roverButtons = rovers.map(name =>
         `<button onclick="handleRoverClick('${name}')">${name}</button>`
     ).join(" ");
 
     return `
         <header>
-            <h1>Welcome, ${state.user.name}</h1>
+            <h1>Welcome, ${name}</h1>
             ${roverButtons}
         </header>
         <main>
