@@ -1,5 +1,5 @@
 let store = {
-    user: { name: "Student" },
+    user: { name: "NASA Fans" },
     apod: '',
     rovers: ['Curiosity', 'Opportunity', 'Spirit'],
 }
@@ -19,28 +19,20 @@ const render = async (root, state) => {
 
 // create content
 const App = (state) => {
-    let { rovers, apod } = state
+    let { rovers, apod, selectedRoverData } = state;
+    const roverButtons = rovers.map(name =>
+        `<button onclick="handleRoverClick('${name}')">${name}</button>`
+    ).join(" ");
 
     return `
-        <header></header>
+        <header>
+            <h1>Welcome, ${state.user.name}</h1>
+            ${roverButtons}
+        </header>
         <main>
-            ${Greeting(store.user.name)}
-            <section>
-                <h3>Put things on the page!</h3>
-                <p>Here is an example section.</p>
-                <p>
-                    One of the most popular websites at NASA is the Astronomy Picture of the Day. In fact, this website is one of
-                    the most popular websites across all federal agencies. It has the popular appeal of a Justin Bieber video.
-                    This endpoint structures the APOD imagery and associated metadata so that it can be repurposed for other
-                    applications. In addition, if the concept_tags parameter is set to True, then keywords derived from the image
-                    explanation are returned. These keywords could be used as auto-generated hashtags for twitter or instagram feeds;
-                    but generally help with discoverability of relevant imagery.
-                </p>
-                ${ImageOfTheDay(apod)}
-            </section>
+            ${selectedRoverData ? RoverView(selectedRoverData) : '<p>Choose a Rover</p>'}
         </main>
-        <footer></footer>
-    `
+    `;
 }
 
 // listening for load event because page should load before any JS is called
@@ -91,6 +83,31 @@ const ImageOfTheDay = (apod) => {
     }
 }
 
+const RoverView = (roverData) => {
+    if (!roverData) return "<p style='color:red;'>Load failed or no data available.</p>";
+
+    const { photos, rover } = roverData;
+
+    if (!Array.isArray(photos) || photos.length === 0 || !rover) {
+        return `<p style='color:red;'>${roverData.error}</p>`;
+    }
+
+    const roverInfo = `
+        <div>
+            <h2>${rover.name}</h2>
+            <p><strong>Launch Date:</strong> ${rover.launch_date}</p>
+            <p><strong>Landing Date:</strong> ${rover.landing_date}</p>
+            <p><strong>Status:</strong> ${rover.status}</p>
+        </div>
+    `;
+
+    const gallery = photos.map(img =>
+        `<img src="${img.img_src}" alt="Mars rover photo" width="300">`
+    ).join("");
+
+    return `<section>${roverInfo}<div class="gallery">${gallery}</div></section>`;
+};
+
 // ------------------------------------------------------  API CALLS
 
 // Example API call
@@ -102,4 +119,27 @@ const getImageOfTheDay = (state) => {
         .then(apod => updateStore(store, { apod }))
 
     return data
+}
+
+const getRoverData = async (roverName) => {
+    try {
+        const res = await fetch(`/rover/${roverName}`);
+
+        if (!res.ok) {
+            const errorData = await res.json();
+            return { error: errorData.error || 'Unknown error occurred' };
+        }
+
+        const data = await res.json();
+        return data;
+    } catch (error) {
+        console.error("Failed to fetch rover data:", error);
+        return { error: "Network or server error occurred." };
+    }
+};
+
+
+window.handleRoverClick = async (roverName) => {
+    const roverData = await getRoverData(roverName);
+    updateStore(store, { selectedRoverData: roverData });
 }
